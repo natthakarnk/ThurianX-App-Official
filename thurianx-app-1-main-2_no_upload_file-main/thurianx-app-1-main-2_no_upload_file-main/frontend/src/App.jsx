@@ -3,27 +3,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function WelcomeScreen({ onStart, lang, setLang }) {
   useEffect(() => {
-  const playAudioOnce = () => {
-    const audio = new Audio('/epic_ThurianX_app.mp3');
-    audio.volume = 0.5;
-    audio.play().catch(() => {});
-    window.__thurianxAudio = audio;
+    const handleInteraction = () => {
+      const audio = new Audio('/epic_ThurianX_app.mp3');
+      audio.volume = 0.5;
+      audio.play().catch((err) => {
+        console.warn('🎵 Cannot play audio:', err);
+      });
+      window.__thurianxAudio = audio;
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+    };
 
-    document.removeEventListener('touchstart', playAudioOnce);
-    document.removeEventListener('click', playAudioOnce);
-  };
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
 
-  document.addEventListener('touchstart', playAudioOnce);
-  document.addEventListener('click', playAudioOnce);
-
-  return () => {
-    if (window.__thurianxAudio) {
-      window.__thurianxAudio.pause();
-      window.__thurianxAudio.currentTime = 0;
-    }
-  };
-}, []);
-
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      if (window.__thurianxAudio) {
+        window.__thurianxAudio.pause();
+        window.__thurianxAudio.currentTime = 0;
+      }
+    };
+  }, []);
 
   const handleStart = () => {
     onStart();
@@ -55,6 +57,18 @@ function WelcomeScreen({ onStart, lang, setLang }) {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6 text-center space-y-6 relative overflow-hidden">
+      {/* ข้อความเบาๆ ลอยๆ ชวนเปิดเสียง */}
+      <motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  className="absolute top-4 right-4 text-sm text-gray-400 animate-pulse z-20"
+>
+  {lang === 'TH' && 'สัมผัสเพื่อเปิดดนตรี 🎵'}
+  {lang === 'EN' && 'Touch the screen to enable sound 🎵'}
+  {lang === 'CN' && '点击屏幕以开启音乐 🎵'}
+</motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -167,6 +181,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [resultIndex, setResultIndex] = useState(null);
+  const [analyzed, setAnalyzed] = useState(false);
   const [started, setStarted] = useState(false);
   const [lang, setLang] = useState('TH');
   const fileInputRef = useRef(null);
@@ -184,10 +199,13 @@ function App() {
     CN: ['📷 拍照', '🔍 分析']
   };
 
+  
+  
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
+      setAnalyzed(false);
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(file);
@@ -195,7 +213,9 @@ function App() {
   };
 
   const analyzeImage = async () => {
+    if (analyzed) return;
     setLoading(true);
+    setAnalyzed(true);
     setTimeout(() => {
       const index = Math.floor(Math.random() * 4);
       setResultIndex(index);
@@ -244,21 +264,47 @@ function App() {
 
           <input type="file" accept="image/*" capture="environment" onChange={handleUpload} ref={cameraInputRef} className="hidden" />
 
-          <div className="flex gap-4 flex-wrap justify-center">
+          <div className="flex gap-4 flex-wrap justify-center mt-2">
             <button onClick={() => cameraInputRef.current && cameraInputRef.current.click()} className="bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-xl text-sm font-medium shadow">
               {buttons[lang][0]}
             </button>
-
-            <button onClick={analyzeImage} disabled={!preview || loading} className="bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl text-sm font-medium shadow disabled:opacity-40">
+            <button onClick={analyzeImage} disabled={!preview || loading || analyzed} className="bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl text-sm font-medium shadow disabled:opacity-40">
               {buttons[lang][1]}
             </button>
           </div>
 
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => {
+                setStarted(false);
+                setImage(null);
+                setPreview(null);
+                setResult(null);
+                setResultIndex(null);
+                setAnalyzed(false);
+              }}
+              className="bg-white text-black px-6 py-2 rounded-full shadow-md hover:scale-105 transition-all text-sm font-semibold tracking-wide border border-gray-300 backdrop-blur-md"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              {lang === 'TH' ? 'ย้อนกลับไปหน้าแรก' : lang === 'EN' ? 'Back to Home' : '返回首页'}
+            </button>
+          </div>
+
+
+
           <AnimatePresence>
             {loading && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-yellow-500 text-center">
-                ⏳ {lang === 'TH' ? 'AI กำลังวิเคราะห์ภาพ...' : lang === 'EN' ? 'AI analyzing...' : 'AI 正在分析...'}
-              </motion.p>
+              <motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  className="flex flex-col items-center justify-center gap-3 py-4 text-center"
+>
+  <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+  <p className="text-green-700 font-semibold text-sm">
+    ⏳ {lang === 'TH' ? 'AI กำลังวิเคราะห์ภาพ...' : lang === 'EN' ? 'AI analyzing...' : 'AI 正在分析...'}
+  </p>
+</motion.div>
             )}
             {result && !loading && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
