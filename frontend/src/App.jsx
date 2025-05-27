@@ -258,7 +258,7 @@ function App() {
           ) : (
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-green-300 rounded-xl h-60 text-gray-400 text-center p-4">
               <p>{lang === 'TH' ? 'ยังไม่ได้เลือกรูปภาพ' : lang === 'EN' ? 'No image selected' : '尚未选择图片'}</p>
-              <p className="text-sm mt-2">{lang === 'TH' ? 'กรุณาอัปโหลดภาพทุเรียนเพื่อเริ่มวิเคราะห์' : lang === 'EN' ? 'Please upload a durian image to start analysis' : '请上传榴莲图像以开始分析'}</p>
+              <p className="text-sm mt-2">{lang === 'TH' ? 'กรุณาถ่ายรูปทุเรียนที่ต้องการเพื่อเริ่มวิเคราะห์' : lang === 'EN' ? 'Please take a photo of the durian you want to analyze' : '请拍下您想分析的榴莲照片'}</p>
             </div>
           )}
 
