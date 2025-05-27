@@ -64,7 +64,7 @@ function WelcomeScreen({ onStart, lang, setLang }) {
   exit={{ opacity: 0 }}
   className="absolute top-4 right-4 text-sm text-gray-400 animate-pulse z-20"
 >
-  {lang === 'TH' && 'สัมผัสเพื่อเปิดดนตรี 🎵'}
+  {lang === 'TH' && 'แตะที่หน้าจอเพื่อเปิดเสียงดนตรี 🎵'}
   {lang === 'EN' && 'Touch the screen to enable sound 🎵'}
   {lang === 'CN' && '点击屏幕以开启音乐 🎵'}
 </motion.div>
